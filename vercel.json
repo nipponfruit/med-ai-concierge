@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/health", "destination": "/api/health" },
+    { "source": "/kb/:match*", "destination": "/api/kb/:match*" },
+    { "source": "/", "destination": "/public/index.html" },
+    { "source": "/style.css", "destination": "/public/style.css" },
+    { "source": "/app.js", "destination": "/public/app.js" },
+    { "source": "/(.*)\.(css|js|png|jpg|jpeg|svg|ico|webp)", "destination": "/public/$1.$2" }
+  ]
+}

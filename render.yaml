@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: med-ai-concierge
+    env: node
+    region: singapore
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: CORS_ORIGIN
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false

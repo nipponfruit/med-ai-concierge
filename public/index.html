@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>医師監修AIコンシェルジュ（MVP）</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="header">
+    <h1>医師監修AIコンシェルジュ（MVP）</h1>
+    <div class="policy">監修ポリシー v<span id="policyVer">-</span></div>
+  </header>
+
+  <main class="container">
+    <section class="disclaimer">
+      <p>本サービスは一般的な健康情報の提供を目的とし、診断・処方ではありません。緊急時は119番、または地域の救急相談（#7119等）へご相談ください。</p>
+    </section>
+
+    <section class="chat-box">
+      <div class="input-row">
+        <div class="field">
+          <label for="question">ご相談内容</label>
+          <textarea id="question" rows="3" aria-describedby="q-help" placeholder="症状や状況をできるだけ具体的に入力してください（例：38.5℃の発熱が3日続く、強い咳、基礎疾患 など）"></textarea>
+          <div id="q-help" class="help">できるだけ具体的に。例：38.5℃が3日、強い咳、基礎疾患など。Cmd+Enterで送信。</div>
+        </div>
+        <button id="askBtn">送信</button>
+      </div>
+      <div id="status" class="status"></div>
+      <div id="answer" class="answer"></div>
+      <div id="triage" class="triage"></div>
+      <div id="citations" class="citations"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <small>© 2025 Med AI Concierge MVP</small>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -36,6 +36,60 @@ let ready = false
   }
 })()
 
+// Optional: LLM-based answer generator (uses OpenAI if key is set)
+async function llmAnswer(query, docs, riskLevel) {
+  const key = process.env.OPENAI_API_KEY
+  if (!key) return null
+  try {
+    const fetchFn = globalThis.fetch || (await import('undici')).fetch
+    const context = (docs || []).map((d, i) => `[#${i + 1}] ${d.title}\nURL: ${d.url}\nSOURCE: ${d.source}\nTEXT: ${d.content}`).join('\n\n')
+    const system = [
+      'あなたは日本語のヘルスインフォ・アシスタントです。',
+      '出典（厚労省・環境省など）に反する推測はしないでください。',
+      '医学的診断や処方は行わず、一般的な健康情報として回答してください。',
+      '箇条書きを適度に使い、簡潔にわかりやすく答えてください。'
+    ].join('\n')
+    const user = [
+      `質問: ${query}`,
+      '',
+      '参照できる資料は次です。事実がある部分のみを根拠として回答してください。',
+      context,
+      '',
+      '指示:',
+      '- 回答は日本語。',
+      '- 過度に断定せず、受診目安やセルフケアを簡潔に述べる。',
+      '- 参照元と矛盾する記述は避ける。',
+      '- 不明点がある場合は追加情報を促す。'
+    ].join('\n')
+
+    const body = {
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ],
+      temperature: 0.2,
+      max_tokens: 500
+    }
+
+    const resp = await fetchFn('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    })
+    if (!resp.ok) throw new Error(`openai_chat_error_${resp.status}`)
+    const data = await resp.json()
+    const content = data?.choices?.[0]?.message?.content?.trim()
+    return content || null
+  } catch (err) {
+    logger.warn({ err }, 'llm_answer_failed')
+    return null
+  }
+}
+
 function createApp() {
   const app = express()
 
@@ -125,6 +179,16 @@ function createApp() {
       const answer = [templates.nonDiagnosticDisclaimer, templates.emergencyAdvice].join('\n\n')
       return res.json({ answer, citations, risk_level: risk.level, triage_hint })
     }
+
+    // Try LLM-generated answer first (if API key is set), fallback to deterministic summary
+    try {
+      const llm = await llmAnswer(q, docs, risk.level)
+      if (llm) {
+        triage_hint = risk.level === 'high' ? templates.emergencyAdvice : templates.careGuidance
+        const answer = [...answerParts, llm].join('\n\n')
+        return res.json({ answer, citations, risk_level: risk.level, triage_hint })
+      }
+    } catch (_) { /* ignore and fall back */ }
 
     if (!docs || docs.length === 0) {
       const info = templates.infoShortage(q)
